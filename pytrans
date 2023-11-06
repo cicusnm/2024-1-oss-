@@ -1,0 +1,54 @@
+import sys, os #sys:  명령행 매개변수 처리, 인터프리터 설정, 프로그램 종료와 관련된 작업 수행  os: 시스템 작업
+from PyQt5.QtWidgets import * #PyQt5패키지에서 QtWidgerts 함수 변수 클래스 가져온다
+from PyQt5 import uic #시각적으로 디자인된 UI를 파이썬코드로 변환
+import googletrans               #pip install googletrans==4.0.0-rc1 
+from gtts import gTTS            #pip install gtts gTTS의 텍스트를 음성으로 변환시켜준다
+from playsound import playsound  #pip install playsound==1.2.2 변경된 데이터로 오디오 데이터를 생성해 재생시킨다
+
+form_class = uic.loadUiType("c:/dev/ui/sample2.ui")[0] #UI를 로드하고 파이썬으로 전달 
+
+class WindowClass(QMainWindow, form_class) :
+    def __init__(self) :
+        super().__init__()
+        self.setupUi(self)
+
+        self.sayData = "None"
+        self.playlang=""
+        lang_dic = googletrans.LANGCODES
+        lc=list(lang_dic.values())
+
+        for x in lc:
+            self.cmb_items.addItem(x)
+
+        self.btn_trans.clicked.connect(self.transClick)
+        self.btn_play.setDisabled(True)
+        self.btn_play.clicked.connect(self.playClick)
+
+    def playClick(self):
+        print(self.sayData)
+
+        if self.sayData != "None":
+            s = gTTS(text=self.sayData, lang = self.playlang)
+            s.save("sample.mp3")
+            playsound("sample.mp3")
+            os.remove("sample.mp3")
+
+    def transClick(self):
+        translator = googletrans.Translator()
+        sentense = self.txt_src.toPlainText()
+        detect = translator.detect(sentense)
+        src_lang = detect.lang
+        dest_lang = self.cmb_items.currentText()
+        translated = translator.translate(sentense, src=src_lang, dest=dest_lang)
+        self.txt_trans.setText(translated.text)
+
+        #재생에 필요한 변수 정의 코드
+        self.btn_play.setEnabled(True)
+        self.sayData = translated.text
+        self.playlang = dest_lang
+
+if __name__ == "__main__" :
+    app = QApplication(sys.argv)
+    myWindow = WindowClass()
+    myWindow.show()
+    app.exec_()
